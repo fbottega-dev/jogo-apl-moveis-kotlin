@@ -4,144 +4,79 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
+import com.example.jogodecliques.ui.theme.JogoDeCliquesTheme
 import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            JogoScreen()
-        }
+        setContent { JogoDeCliquesTheme { Surface(Modifier.fillMaxSize()) { GameScreen() } } }
     }
 }
 
+private val SessionSaver = listSaver<GameSession, Int>(
+    save = { listOf(it.target, it.clicks, it.phase.ordinal) },
+    restore = { GameSession(it[0], it[1], GamePhase.entries[it[2]]) }
+)
+
 @Composable
-fun JogoScreen() {
-    var clickCount by remember { mutableStateOf(0) }
-    var totalClicks by remember { mutableStateOf(Random.nextInt(1, 51)) }
-    var gameState by remember { mutableStateOf(GameState.START) }
-
-    val currentImage = getImageForState(gameState, clickCount, totalClicks)
-    val context = LocalContext.current
-
+fun GameScreen() {
+    var game by rememberSaveable(stateSaver = SessionSaver) { mutableStateOf(GameSession(Random.nextInt(1, 51))) }
+    var wins by rememberSaveable { mutableIntStateOf(0) }
+    val image = when (game.phase) {
+        GamePhase.WON -> R.drawable.imagem_conquista
+        GamePhase.ABANDONED -> R.drawable.imagem_desistencia
+        else -> when {
+            game.progress >= 0.66f -> R.drawable.imagem_final
+            game.progress >= 0.33f -> R.drawable.imagem_mediana
+            else -> R.drawable.imagem_inicial
+        }
+    }
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically)
     ) {
-        Image(
-            painter = currentImage,
-            contentDescription = null,
-            modifier = Modifier
-                .size(200.dp)
-                .clickable {
-                    if (gameState == GameState.PLAYING) {
-                        clickCount++
-                        if (clickCount >= totalClicks) {
-                            gameState = GameState.WON
-                        }
-                    }
-                }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        when (gameState) {
-            GameState.START -> {
-                Button(onClick = {
-                    gameState = GameState.PLAYING
-                }) {
-                    Text("Começar Jogo")
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = {
-                    gameState = GameState.ABANDONADO
-                }) {
-                    Text("Desistir")
-                }
+        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineLarge)
+        Text(stringResource(R.string.wins, wins), color = MaterialTheme.colorScheme.primary)
+        Image(painterResource(image), contentDescription = null, modifier = Modifier.size(220.dp))
+        Text(stringResource(when(game.phase) {
+            GamePhase.READY -> R.string.ready
+            GamePhase.PLAYING -> R.string.playing
+            GamePhase.WON -> R.string.won
+            GamePhase.ABANDONED -> R.string.abandoned
+        }), style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+        if (game.phase != GamePhase.READY) {
+            LinearProgressIndicator(progress = game.progress, modifier = Modifier.fillMaxWidth())
+            Text(stringResource(R.string.click_count, game.clicks, game.target))
+        }
+        when (game.phase) {
+            GamePhase.READY -> Button(onClick = { game = game.start() }, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.start))
             }
-            GameState.PLAYING -> {
-                Text(text = "Cliques: $clickCount")
-                Spacer(modifier = Modifier.height(16.dp))
+            GamePhase.PLAYING -> {
                 Button(onClick = {
-                    gameState = GameState.ABANDONADO
-                }) {
-                    Text("Desistir")
-                }
+                    game = game.click()
+                    if (game.phase == GamePhase.WON) wins++
+                }, modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) { Text(stringResource(R.string.click)) }
+                TextButton(onClick = { game = game.abandon() }) { Text(stringResource(R.string.give_up)) }
             }
-            GameState.ABANDONADO -> {
-                Text("Você desistiu. Novo jogo?")
-                Spacer(modifier = Modifier.height(8.dp))
-                Row {
-                    Button(onClick = {
-                        clickCount = 0
-                        totalClicks = Random.nextInt(1, 51)
-                        gameState = GameState.START
-                    }) {
-                        Text("Sim")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = {
-                        // Encerrar o aplicativo
-                        (context as? ComponentActivity)?.finishAffinity()
-                    }) {
-                        Text("Não")
-                    }
-                }
-            }
-            GameState.WON -> {
-                Text("Parabéns! Você venceu!")
-                Spacer(modifier = Modifier.height(8.dp))
-                Row {
-                    Button(onClick = {
-                        clickCount = 0
-                        totalClicks = Random.nextInt(1, 51)
-                        gameState = GameState.START
-                    }) {
-                        Text("Jogar novamente")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = {
-                        // Encerrar o aplicativo
-                        (context as? ComponentActivity)?.finishAffinity()
-                    }) {
-                        Text("Sair")
-                    }
-                }
+            else -> Button(onClick = { game = GameSession(Random.nextInt(1, 51)) }, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.play_again))
             }
         }
     }
-}
-
-@Composable
-fun getImageForState(state: GameState, clickCount: Int, totalClicks: Int): Painter {
-    return when (state) {
-        GameState.START -> painterResource(id = R.drawable.imagem_inicial)
-        GameState.PLAYING -> {
-            val progress = clickCount / totalClicks.toFloat()
-            when {
-                progress < 0.33 -> painterResource(id = R.drawable.imagem_inicial)
-                progress < 0.66 -> painterResource(id = R.drawable.imagem_mediana)
-                progress < 1.0 -> painterResource(id = R.drawable.imagem_final)
-                else -> painterResource(id = R.drawable.imagem_conquista)
-            }
-        }
-        GameState.ABANDONADO -> painterResource(id = R.drawable.imagem_desistencia)
-        GameState.WON -> painterResource(id = R.drawable.imagem_conquista)
-    }
-}
-
-enum class GameState {
-    START, PLAYING, ABANDONADO, WON
 }

@@ -1,3 +1,13 @@
 <resources>
-    <string name="app_name">JogoDeCliques</string>
+    <string name="app_name">Jogo de Cliques</string>
+    <string name="ready">Um toque de cada vez. Vamos começar?</string>
+    <string name="playing">Continue! A meta está chegando.</string>
+    <string name="won">Meta alcançada!</string>
+    <string name="abandoned">Pausa feita. Tente outra rodada.</string>
+    <string name="wins">Vitórias nesta sessão: %1$d</string>
+    <string name="click_count">%1$d de %2$d cliques</string>
+    <string name="start">Começar rodada</string>
+    <string name="click">Clique aqui</string>
+    <string name="give_up">Encerrar rodada</string>
+    <string name="play_again">Nova rodada</string>
 </resources>
