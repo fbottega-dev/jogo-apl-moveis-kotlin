@@ -10,4 +10,9 @@
     <string name="click">Clique aqui</string>
     <string name="give_up">Encerrar rodada</string>
     <string name="play_again">Nova rodada</string>
+    <string name="choose_difficulty">Escolha a dificuldade</string>
+    <string name="difficulty_easy">Fácil</string>
+    <string name="difficulty_normal">Médio</string>
+    <string name="difficulty_hard">Difícil</string>
+    <string name="difficulty_range">%1$s · %2$d a %3$d cliques</string>
 </resources>

@@ -4,6 +4,8 @@
 
 Jogo Android em Kotlin e Jetpack Compose. Cada rodada sorteia uma meta de 1 a 50 cliques; o jogador acompanha o progresso, pode encerrar a rodada e começar outra.
 
+Antes de começar, escolha o nível: **fácil (1–10), médio (11–30) ou difícil (31–50)**. A escolha vale para as próximas rodadas e é preservada ao girar a tela. O nível só pode ser alterado antes do início da rodada.
+
 ## Melhorias nesta versão
 
 - Uma única estrutura de projeto na raiz; a cópia duplicada foi removida.
@@ -33,7 +35,7 @@ Linux/macOS: `chmod +x gradlew && ./gradlew testDebugUnitTest lintDebug assemble
 
 O APK fica em `app/build/outputs/apk/debug/app-debug.apk`. No GitHub, abra uma execução bem-sucedida de **Actions → Android CI → Artifacts → jogo-cliques-debug** para baixar o pacote. É um APK de desenvolvimento, não uma publicação na Play Store.
 
-Os 7 testes verificam meta exata, limites inválidos, rodada de um clique, cliques fora da partida e impossibilidade de alterar uma rodada já vencida. Lint foi executado sem erros; ainda há avisos de dependências/recursos do projeto original.
+Os 10 testes verificam regras da rodada e níveis de dificuldade: faixas sem sobreposição, metas sorteadas dentro dos limites e independência entre rodadas. Lint foi executado sem erros; ainda há avisos de dependências/recursos do projeto original.
 
 ## Estados
 
@@ -50,7 +52,7 @@ stateDiagram-v2
 
 - Não foi validado em aparelho/emulador nesta entrega; build, testes JVM e lint foram executados.
 - O contador não é um histórico permanente após fechar o aplicativo; persistência com DataStore é uma próxima melhoria.
-- Próximos passos: testes Compose, modo de dificuldade e imagens otimizadas para diferentes densidades.
+- Próximos passos: testes Compose, histórico permanente de vitórias e imagens otimizadas para diferentes densidades.
 - Não há serviços remotos, anúncios ou coleta de dados implementados.
 
 [Uso de IA e revisão](docs/AI_USAGE.md)
